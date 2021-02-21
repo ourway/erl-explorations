@@ -8,7 +8,6 @@
 -behaviour(supervisor).
 
 -export([start_link/0]).
-
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
@@ -26,10 +25,19 @@ start_link() ->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
 init([]) ->
-    SupFlags = #{strategy => one_for_all,
-                 intensity => 0,
-                 period => 1},
-    ChildSpecs = [],
-    {ok, {SupFlags, ChildSpecs}}.
+    RestartStrategy = one_for_one,
+    MaxRestarts = 1000,
+    MaxSecondsBetweenRestarts = 3600,
+
+    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+
+    AChild =
+        {my_fib_server, {fib_server, start_link, []}, Restart, Shutdown, Type, [fib_server]},
+
+    {ok, {SupFlags, [AChild]}}.
 
 %% internal functions
